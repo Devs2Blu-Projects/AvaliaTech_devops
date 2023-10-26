@@ -1,0 +1,148 @@
+name: avaliatech_actions
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # push:
+  #   branches: [ "main" ]
+  
+  # workflow_dispatch:
+
+env:
+  # isto não é necessario apenas saiba que existe! 
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: 'us-east-1'
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Create S3 Bucket
+        run: |
+          aws s3api create-bucket --bucket avaliatech-terraform-state --region us-east-1
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+          chmod 600 ~/.ssh/id_rsa
+          chmod 644 ~/.ssh/id_rsa.pub
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+        
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_wrapper: false
+
+      # - name: Qual diretorio estou
+      #   run: pwd && ls -la && ls -la ~/.ssh
+      
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var="create_key=false"
+
+      # Com bucket da S3 não precisa mais do delay, somente continuar de onde deu erro.
+      #- name: Wait for instance to be ready
+      #  run: sleep 80  # waits for 60 seconds
+      
+      - name: Get AWS Instance ID from Terraform Output_avaliatechback_vm_id
+        run: |
+          avaliatechback_vm_id=$(terraform output -raw avaliatechback_vm_id)
+          echo "INSTANCE_ID=$avaliatechback_vm_id" >> $GITHUB_ENV
+      
+      - name: Wait for instance to be ready_avaliatechback_vm_id
+        run: |
+          while true; do
+            status=$(aws ec2 describe-instance-status --instance-ids $INSTANCE_ID --region us-east-1 --query 'InstanceStatuses[0].[InstanceState.Name, SystemStatus.Status, InstanceStatus.Status]' --output text)
+            arr=($status)
+            if [ "${arr[0]}" == "running" ] && [ "${arr[1]}" == "ok" ] && [ "${arr[2]}" == "ok" ]; then
+              echo "instancia pronta para utilização."
+              break
+            fi
+            echo "Aguardando a instancia ficar pronta..."
+            sleep 10
+          done
+      
+      
+      - name: Get AWS Instance ID from Terraform Output_avaliatechfront_vm_id
+        run: |
+          avaliatechfront_vm_id=$(terraform output -raw avaliatechfront_vm_id)
+          echo "INSTANCE_ID=$avaliatechfront_vm_id" >> $GITHUB_ENV
+      
+      - name: Wait for instance to be ready_avaliatechfront_vm_id
+        run: |
+          while true; do
+            status=$(aws ec2 describe-instance-status --instance-ids $INSTANCE_ID --region us-east-1 --query 'InstanceStatuses[0].[InstanceState.Name, SystemStatus.Status, InstanceStatus.Status]' --output text)
+            arr=($status)
+            if [ "${arr[0]}" == "running" ] && [ "${arr[1]}" == "ok" ] && [ "${arr[2]}" == "ok" ]; then
+              echo "instancia pronta para utilização."
+              break
+            fi
+            echo "Aguardando a instancia ficar pronta..."
+            sleep 10
+          done
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Set INSTANCE_IP environment variable
+        run: |
+          echo "avaliatechback_vm_ip=`terraform output -raw avaliatechback_vm_ip`" >> $GITHUB_ENV
+          echo "avaliatechfront_vm_ip=`terraform output -raw avaliatechfront_vm_ip`" >> $GITHUB_ENV
+
+      - name: Create Ansible Inventory
+        run: |
+          echo "[avaliatech_vm]" > inventory.ini
+          echo "${avaliatechback_vm_ip}" >> inventory.ini
+          echo "${avaliatechfront_vm_ip}" >> inventory.ini
+          echo "" >> inventory.ini
+          cat inventory.ini
+
+      - name: Setup SSH Keys depois do Ansible
+        run: |
+          ssh-keyscan ${avaliatechback_vm_ip} >> ~/.ssh/known_hosts
+          ssh-keyscan ${avaliatechfront_vm_ip} >> ~/.ssh/known_hosts
+          ls -la ~/.ssh
+          cat ~/.ssh/known_hosts
+      
+      - name: Run Ansible Playbook
+      # Variaveis do docker-compose do git hackweed_aplicação.
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+        run: ansible-playbook -i inventory.ini playbook.yml
+        
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
+
+      # Com bucket não precisa mais excluir a instancia, somente atualizar.
+      # - name: Cleanup Resources
+      #   if: failure()  # Executa apenas se a etapa anterior falhar
+      #   run: |
+      #     terraform destroy -auto-approve -target=aws_key_pair.keypair_jhonata_actions
+      #     terraform destroy -auto-approve -target=aws_security_group.security_group_jhonata_actions
+      #     terraform destroy -auto-approve  # Destruir outras recursos, se necessário

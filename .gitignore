@@ -1,0 +1,102 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Java
+*.class
+*.war
+*.ear
+/target/
+.gradle/
+build/
+
+# Flutter
+/.dart_tool/
+/.flutter-plugins
+/.flutter-plugins-dependencies
+/.pub-cache/
+/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.idea/
+
+# C#
+*.suo
+*.user
+*.sln.docstates
+bin/
+obj/
+.vscode/
+.vs/
+*.csproj.user
+*.userprefs
+*.log
+*_i.c
+*_p.c
+*.ilk
+*.meta
+*.pidb
+*.pdb
+*.user
+*.unityproj
+*.booproj
+*.svd
+*.suo
+*.sdf
+*.opensdf
+*.tss
+*.scc
+*.opendb
+*.dbmdl
+*.jfm
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.iml
+*.sln.docstates
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Flutter/Dart specific
+#pubspec.lock
+#pubspec.yaml
+#*.iml
+
+# Android
+**/gradle-wrapper.properties
+**/local.properties
+**/gradle-local.properties
+**/secure.properties
+**/gradle.properties
+
+# iOS
+Pods/
+Podfile.lock
+DerivedData/
+.idea/
+xcuserdata/
+
+# Flutter build directory
+/build/
+
+# Docker
+docker-compose.override.yml
+docker-compose.yml
+.env
+.dockerignore
+
