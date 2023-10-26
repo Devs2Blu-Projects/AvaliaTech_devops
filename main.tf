@@ -92,10 +92,6 @@ resource "aws_instance" "avaliatechback_vm" {
   }
 }
 
-resource "aws_eip" "avaliatechback_vm" {
-  instance = aws_instance.avaliatechback_vm_id  
-}
-
 resource "aws_instance" "avaliatechfront_vm" {
   ami           = "ami-053b0d53c279acc90"  # AMI do Ubuntu 18.04 (substitua pela AMI desejada)
   instance_type = "t2.medium"  # Tipo de instância (substitua pelo tipo desejado)
@@ -128,4 +124,8 @@ resource "aws_instance" "avaliatechfront_vm" {
 
 resource "aws_eip" "avaliatechfront_vm" {
   instance = aws_instance.avaliatechfront_vm_id  
+}
+
+resource "aws_eip" "avaliatechback_vm" {
+  instance = aws_instance.avaliatechback_vm_id  
 }
