@@ -123,9 +123,9 @@ resource "aws_instance" "avaliatechfront_vm" {
 }
 
 resource "aws_eip" "avaliatechfront_vm" {
-  instance = aws_instance.avaliatechfront_vm_id  
+  instance = aws_instance.avaliatechfront_vm.id  
 }
 
 resource "aws_eip" "avaliatechback_vm" {
-  instance = aws_instance.avaliatechback_vm_id  
+  instance = aws_instance.avaliatechback_vm.id  
 }
