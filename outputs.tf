@@ -1,13 +1,13 @@
-output "instance_ip" {
-  value = aws_instance.avaliatech_vm.public_ip
-  description = "O IP público da instância EC2"
-}
-output "instance_id" {
-  value = aws_instance.avaliatech_vm.id
-}
-output "instance_public_dns" {
-  value = aws_instance.avaliatech_vm.public_dns
-}
+# output "instance_ip" {
+#   value = aws_instance.avaliatech_vm.public_ip
+#   description = "O IP público da instância EC2"
+# }
+# output "instance_id" {
+#   value = aws_instance.avaliatech_vm.id
+# }
+# output "instance_public_dns" {
+#   value = aws_instance.avaliatech_vm.public_dns
+# }
 
 output "avaliatechback_vm_ip" {
   value       = aws_instance.avaliatechback_vm.public_ip
