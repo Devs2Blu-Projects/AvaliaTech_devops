@@ -41,6 +41,24 @@ jobs:
             docker build -t avaliatech-frontend:latest .
         working-directory: $GITHUB_WORKSPACE
 
+
+      - name: Build and push Docker image
+        working-directory: app/Avaliatech-frontend
+        run: |
+          # Comandos para autenticar no ECR (substitua as variáveis com suas credenciais)
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ${{ secrets.AWS_DEFAULT_REGION }}
+          aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin 794196173640.dkr.ecr.us-east-1.amazonaws.com
+  
+          # Comandos para construir e enviar a imagem Docker
+          docker build -t 794196173640.dkr.ecr.us-east-1.amazonaws.com/avaliatech-docker/avaliatech-frontend:latest .
+          docker push 794196173640.dkr.ecr.us-east-1.amazonaws.com/avaliatech-docker/avaliatech-frontend:latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
+
         # Run Docker Compose
       - name: Run Docker Compose
         run: |

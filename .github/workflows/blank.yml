@@ -148,14 +148,14 @@ jobs:
           ls -la ~/.ssh
           cat ~/.ssh/known_hosts
       
-      - name: Run Ansible Playbook
-      # Variaveis do docker-compose do git hackweed_aplicação.
-        env:
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USERID: ${{ secrets.DB_USERID }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-        run: ansible-playbook -i inventory.ini playbook.yml
+      # - name: Run Ansible Playbook
+      # # Variaveis do docker-compose do git hackweed_aplicação.
+      #   env:
+      #     DB_NAME: ${{ secrets.DB_NAME }}
+      #     DB_USERID: ${{ secrets.DB_USERID }}
+      #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      #     APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      #   run: ansible-playbook -i inventory.ini playbook.yml
       
       - name: Create appsettings.json
         run: |

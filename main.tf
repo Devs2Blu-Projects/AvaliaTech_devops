@@ -55,6 +55,14 @@ resource "aws_security_group" "security_group_avaliatech" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+
+    ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -82,6 +90,16 @@ resource "aws_instance" "avaliatechback_vm" {
               chmod 600 ~/.ssh/authorized_keys
               EOF
 
+  root_block_device {
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdf"  # Ponto de montagem do novo disco
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
 
   tags = {
     Name        = "avaliatechback_vm"
@@ -110,6 +128,17 @@ resource "aws_instance" "avaliatechfront_vm" {
               echo "${file("~/.ssh/id_rsa.pub")}" >> ~/.ssh/authorized_keys
               chmod 600 ~/.ssh/authorized_keys
               EOF
+
+  root_block_device {
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdf"  # Ponto de montagem do novo disco
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
 
 
   tags = {
@@ -140,6 +169,17 @@ resource "aws_instance" "avaliatechdevops_vm" {
               echo "${file("~/.ssh/id_rsa.pub")}" >> ~/.ssh/authorized_keys
               chmod 600 ~/.ssh/authorized_keys
               EOF
+
+  root_block_device {
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdf"  # Ponto de montagem do novo disco
+    volume_size = 30  # Tamanho do disco em GB
+    volume_type = "gp2"  # Tipo de volume EBS (gp2 é um tipo geral)
+  }
 
 
   tags = {
