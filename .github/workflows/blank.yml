@@ -129,7 +129,7 @@ jobs:
         run: |
           echo "avaliatechback_vm_ip=`terraform output -raw avaliatechback_vm_ip`" >> $GITHUB_ENV
           echo "avaliatechfront_vm_ip=`terraform output -raw avaliatechfront_vm_ip`" >> $GITHUB_ENV
-          echo "avaliatechdevops_vm_ip=`terraform output -raw avaliatechfront_vm_ip`" >> $GITHUB_ENV
+          echo "avaliatechdevops_vm_ip=`terraform output -raw avaliatechdevops_vm_ip`" >> $GITHUB_ENV
 
       - name: Create Ansible Inventory
         run: |
