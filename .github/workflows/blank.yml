@@ -99,6 +99,24 @@ jobs:
             sleep 10
           done
 
+      - name: Get AWS Instance ID from Terraform Output_avaliatechdevops_vm_id
+        run: |
+          avaliatechdevops_vm_id=$(terraform output -raw avaliatechdevops_vm_id)
+          echo "INSTANCE_ID=$avaliatechdevops_vm_id" >> $GITHUB_ENV
+      
+      - name: Wait for instance to be ready_avaliatechdevops_vm_id
+        run: |
+          while true; do
+            status=$(aws ec2 describe-instance-status --instance-ids $INSTANCE_ID --region us-east-1 --query 'InstanceStatuses[0].[InstanceState.Name, SystemStatus.Status, InstanceStatus.Status]' --output text)
+            arr=($status)
+            if [ "${arr[0]}" == "running" ] && [ "${arr[1]}" == "ok" ] && [ "${arr[2]}" == "ok" ]; then
+              echo "instancia pronta para utilização."
+              break
+            fi
+            echo "Aguardando a instancia ficar pronta..."
+            sleep 10
+          done          
+
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -111,12 +129,14 @@ jobs:
         run: |
           echo "avaliatechback_vm_ip=`terraform output -raw avaliatechback_vm_ip`" >> $GITHUB_ENV
           echo "avaliatechfront_vm_ip=`terraform output -raw avaliatechfront_vm_ip`" >> $GITHUB_ENV
+          echo "avaliatechdevops_vm_ip=`terraform output -raw avaliatechfront_vm_ip`" >> $GITHUB_ENV
 
       - name: Create Ansible Inventory
         run: |
           echo "[avaliatech_vm]" > inventory.ini
           echo "${avaliatechback_vm_ip}" >> inventory.ini
           echo "${avaliatechfront_vm_ip}" >> inventory.ini
+          echo "${avaliatechdevops_vm_ip}" >> inventory.ini
           echo "" >> inventory.ini
           cat inventory.ini
 
@@ -124,16 +144,52 @@ jobs:
         run: |
           ssh-keyscan ${avaliatechback_vm_ip} >> ~/.ssh/known_hosts
           ssh-keyscan ${avaliatechfront_vm_ip} >> ~/.ssh/known_hosts
+          ssh-keyscan ${avaliatechdevops_vm_ip} >> ~/.ssh/known_hosts
           ls -la ~/.ssh
           cat ~/.ssh/known_hosts
       
       - name: Run Ansible Playbook
       # Variaveis do docker-compose do git hackweed_aplicação.
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USERID: ${{ secrets.DB_USERID }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: ansible-playbook -i inventory.ini playbook.yml
+      
+      - name: Create appsettings.json
+        run: |
+          mkdir -p app/avaliatech-backend  # Cria a pasta se ela não existir
+          echo '{
+            "ConnectionStrings": {
+              "DefaultConnection": "Server=projects-teste.cmw2whm4hmzl.us-east-1.rds.amazonaws.com,1433;Database=${{ secrets.DB_NAME }};User Id=${{ secrets.DB_USERID }};Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
+            },
+            "Logging": {
+              "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+              }
+            },
+            "AllowedHosts": "*",
+            "Jwt": {
+              "Key": "thisIsMyTokenKeyAndItHasToHave512bitsSoMakeSureYouHaveALongKeyWhileIAmAtItLetMeWriteTheBiggestKeyIHaveEverSeen",
+              "Issuer": "https://localhost:PORT",
+              "Audience": "https://localhost:PORT"
+            },
+            "Seed": {
+              "Admin": {
+                "Username": "${{ secrets.DB_USERID }}",
+                "Password": "${{ secrets.APP_PASSWORD }}"
+              },
+              "Event": {
+                "Name": "+Devs2Blu HackWeek 2023",
+                "StartDate": "2023-10-31T00:00:01",
+                "EndDate": "2023-10-31T23:59:59"
+              }
+            }
+          }' > app/avaliatech-backend/appsettings.json
         
+
       - name: Run a multi-line script
         run: |
           echo Add other actions to build,

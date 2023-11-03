@@ -122,6 +122,35 @@ resource "aws_instance" "avaliatechfront_vm" {
 
 }
 
+resource "aws_instance" "avaliatechdevops_vm" {
+  ami           = "ami-053b0d53c279acc90"  # AMI do Ubuntu 18.04 (substitua pela AMI desejada)
+  instance_type = "t2.medium"  # Tipo de instância (substitua pelo tipo desejado)
+  key_name      = aws_key_pair.keypair_avaliatech.key_name
+
+  vpc_security_group_ids = [aws_security_group.security_group_avaliatech.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get install -y software-properties-common
+              sudo apt-add-repository --yes --update ppa:ansible/ansible
+              sudo apt-get install -y ansible
+
+              # Copia a chave SSH para o diretório do usuário
+              echo "${file("~/.ssh/id_rsa.pub")}" >> ~/.ssh/authorized_keys
+              chmod 600 ~/.ssh/authorized_keys
+              EOF
+
+
+  tags = {
+    Name        = "avaliatechdevops_vm"
+    Environment = "dev"
+    Application = "backend"
+    Class       = "DevOps"
+    Origem      = "hackweek"
+  }  
+
+}
 # resource "aws_eip" "avaliatechfront_vm" {
 #   instance = aws_instance.avaliatechfront_vm.id  
 # }

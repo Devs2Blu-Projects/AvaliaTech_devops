@@ -144,6 +144,28 @@
         msg: "Diretório do repositório Git não encontrado. Certifique-se de que o Git clone foi bem-sucedido."
       when: not git_directory.stat.exists
 
+    - name: Clonar repositório Git AvaliaTech_devops
+      become: yes
+      become_user: ubuntu
+      git:
+        repo: 'git@github.com:Devs2Blu-Projects/AvaliaTech_devops.git'
+        dest: /home/ubuntu/app
+        version: main
+        accept_hostkey: yes
+        
+    - name: Aguardar um tempo Git AvaliaTech_devops
+      pause:
+        seconds: 60
+
+    - name: Verificar se o diretório Git AvaliaTech_devops foi copiado
+      stat:
+        path: /home/ubuntu/app
+      register: git_directory
+
+    - name: Exibir mensagem de erro se o diretório não existe do Git AvaliaTech_devops
+      fail:
+        msg: "Diretório do repositório Git não encontrado. Certifique-se de que o Git clone foi bem-sucedido."
+      when: not git_directory.stat.exists
     # - name: Iniciar contêineres Docker
     #   become_user: ubuntu
     #   command: docker-compose -f /home/ubuntu/app/docker-compose.yml up -d

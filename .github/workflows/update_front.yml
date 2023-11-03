@@ -1,0 +1,49 @@
+name: agendamento-de-12-horas
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'  # Agendamento a cada 12 horas (a cada 720 minutos)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v2
+
+      - name: Access the folder and perform git pull
+        run: |
+            cd app/avaliatech-backend  # Acesse a pasta desejada
+            git pull  # Execute o git pull para obter as últimas alterações
+
+      - name: Check for Git changes
+        id: git-check
+        run: |
+            git fetch
+            if [[ -n $(git diff --name-only HEAD origin/main) ]]; then
+            echo "::set-output name=changed::true"
+            else
+            echo "::set-output name=changed::false"
+            fi
+        shell: bash
+
+      - name: Build Docker image and run Docker Compose
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+            # Add the Docker build and Docker Compose steps here (as previously shown)
+        working-directory: $GITHUB_WORKSPACE
+
+                # Build Docker image
+      - name: Build Docker image
+        run: |
+            cd avaliatech-frontend
+            docker build -t avaliatech-frontend:latest .
+        working-directory: $GITHUB_WORKSPACE
+
+        # Run Docker Compose
+      - name: Run Docker Compose
+        run: |
+            cd avaliatech-frontend
+            docker-compose up -d
+        working-directory: $GITHUB_WORKSPACE
